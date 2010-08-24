@@ -8,18 +8,20 @@ use IO::File;
 use Net::SFTP::Foreign;
 use Net::SFTP::Foreign::Constants qw(:flags);
 
-##################################################
+#############################################################################
 ## CONFIGURATION
-##################################################
-my $this_host = "home";
-my $ssh_host  = "devio.us";
-my $ssh_user  = "sugar";
-my $ssh_passw = "3CcwVmuY1";
-my $ssh_file  = "/home/sugar/public_html/host_$this_host.xml";
-my $name_if   = "ppp0";
-my $filename  = "/srv/net_ip/net_ip.xml";
+#############################################################################
+my $this_host = "name_of_this_host";
+my $ssh_host  = "name_of_remote_host";
+my $ssh_user  = "your_user";
+my $ssh_passw = "your_password";
+my $ssh_file  = "/path/to/file/on/remote/host";
+my $name_if   = "name_of_local_public_interface";
+my $filename  = "local_file_there_will_keep_info_about_past transactions";
 my $get_ip_url = "http://www.whatismyip.com/automation/n09230945.asp";
-##################################################
+#############################################################################
+
+## Main section
 
 my $method = "url";
 my $addr = get_addr ($name_if, $method);
@@ -49,22 +51,27 @@ if ($error) {
 }
 
 
+## Subs
+
 # conver binary IP address to the decimal form
 sub bintoip {
-    my $bin = shift;
-    my $hex = unpack ('H*', $bin);
-    my $l = 2; my $str = '';
-    for (my $i=1; $i<=4; $i++) {
-        my $n = 2*$i;
-        if (($i == 4) and (length($hex) == 7)) {
-            $l = 1;
-            $n = 7;
+    my $bin_ip= shift;
+    my $hex_ip = unpack ('H*', $bin_ip);
+    my $bytes_to_extract = 2;
+    my $str = '';
+    
+    for my $num_of_octet (1..4) {
+        my $offset = 2*$num_of_octet;
+        if ($Num_of_octet == 4 and length($hex_ip) == 7) {
+            # this acation is neeeded for the first octets in hex adderss
+            $bytes_to_extract = 1;
+            $offset = 7;
         }
-        my $b2 = substr ($hex, -$n, $l);
-        $str = hex($b2) . "." . $str;
+        # we begin constructing ip-address with end 
+        my $buf = substr $hex_ip, -$offset, $bytes_to_extract;
+        $dec_ip = hex($buf) . "." . $dec_ip;
     }
-    chop ($str);
-    return $str;
+    return chop $str;
 }
 
 # get public IP by selected method
