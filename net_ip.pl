@@ -18,12 +18,12 @@ my $ssh_passw = "your_password";
 my $ssh_file  = "/path/to/file/on/remote/host";
 my $name_if   = "name_of_local_public_interface";
 my $filename  = "local_file_there_will_keep_info_about_past transactions";
+my $method = "url";         # maybe 'url' or 'interface'
 my $get_ip_url = "http://www.whatismyip.com/automation/n09230945.asp";
 #############################################################################
 
 ## Main section
 
-my $method = "url";
 my $addr = get_addr ($name_if, $method);
 my ($fh_local, $old_ip, $success) = file_input($filename);
     
@@ -58,11 +58,11 @@ sub bintoip {
     my $bin_ip= shift;
     my $hex_ip = unpack ('H*', $bin_ip);
     my $bytes_to_extract = 2;
-    my $str = '';
+    my $dec_ipi = "";
     
     for my $num_of_octet (1..4) {
         my $offset = 2*$num_of_octet;
-        if ($Num_of_octet == 4 and length($hex_ip) == 7) {
+        if ($num_of_octet == 4 and length($hex_ip) == 7) {
             # this acation is neeeded for the first octets in hex adderss
             $bytes_to_extract = 1;
             $offset = 7;
@@ -71,7 +71,8 @@ sub bintoip {
         my $buf = substr $hex_ip, -$offset, $bytes_to_extract;
         $dec_ip = hex($buf) . "." . $dec_ip;
     }
-    return chop $str;
+    chop $dec_ip;
+    return $dec_ip;
 }
 
 # get public IP by selected method
