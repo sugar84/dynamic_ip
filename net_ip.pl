@@ -172,6 +172,11 @@ sub file_input {
 # save formed in XML data the remote server
 # this is needed to rewrite via OOP interface
 # it should be like this: $copy_via_sftp->Copy_to_Serv->new(ftp, $host, %opts);
+# and add something like this:
+# my $ssh_write = 0x02;
+# my $ssh_creat = 0x08;
+# it is replacement for SSH2_FXF_WRITE & SSH2_FXF_CREAT constants, those 
+# cannot be exported via optional loading modele Net::SFTP::Foreign::Cinstants
 sub save_to_serv {
     my ($data_ref, $method) = @_;
     my %args = ("host" => "$ssh_host", "user" => "$ssh_user", "password" => "$ssh_passw");
