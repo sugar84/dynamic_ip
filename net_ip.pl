@@ -5,30 +5,47 @@ use Data::Dumper;
 use XML::Simple;
 use LWP::Simple;
 use IO::File;
-use Net::SFTP::Foreign;
+use if $ftp, "Net::FTP"
+use if $ssh, "Net::SFTP::Foreign";
 use Net::SFTP::Foreign::Constants qw(:flags);
 
 #############################################################################
 ## CONFIGURATION
 #############################################################################
-my $this_host = "name_of_this_host";
-my $ssh_host  = "name_of_remote_host";
-my $ssh_user  = "your_user";
-my $ssh_passw = "your_password";
-my $ssh_file  = "/path/to/file/on/remote/host";
-my $name_if   = "name_of_local_public_interface";
-my $filename  = "local_file_there_will_keep_info_about_past transactions";
-my $method = "url";         # maybe 'url' or 'interface'
-my $get_ip_url = "http://www.whatismyip.com/automation/n09230945.asp";
+my $this_host    = "name_of_this_host";
+my $name_if      = "name_of_public_interface";
+my $filename     = "local_file_there_will_keep_info_about_past transactions";
+my $method_ip    = "url";         # maybe 'url' or 'interface'
+my $get_ip_url   = "http://www.whatismyip.com/automation/n09230945.asp";
+
+my $sftp; 
+### comment this if you don't use ssh 
+BEGIN {
+    $ssh = "yes";
+}
+my $ssh_host     = "name_of_remote_host";
+my $ssh_user     = "your_user";
+my $ssh_passw    = "your_password";
+my $ssh_file     = "/path/to/file/on/remote/host";
+
+my $ftp;
+### comment this if you don't use ftp
+BEGIN {
+    $ftp = "yes";
+}
+my $ftp_host     = "name_of_remote_host";
+my $ftp_user     = "your_user";
+my $ftp__passw   = "your_password";
+my $ftp__file    = "/path/to/file/on/remote/host";
 #############################################################################
 
 ## Main section
 
-my $addr = get_addr ($name_if, $method);
+my $addr = get_addr ($name_if, $method_ip);
 my ($fh_local, $old_ip, $success) = file_input($filename);
     
-my $data = make_data($addr);
-print "$addr 222 \n";
+my $data_ref = make_data($addr);
+#print "$addr 222 \n";
 my $error;
 if ($addr eq $old_ip) {
     if ($success eq "yes") {
@@ -36,17 +53,17 @@ if ($addr eq $old_ip) {
         undef $fh_local;
         exit 0;
     } else {
-        $error = save_to_serv($data);
+        $error = save_to_serv( $method_save, $data_ref );
     }
 } else {
-    $error = save_to_serv($data);
+    $error = save_to_serv( $method_save, $data_ref );
 }
 
 if ($error) {
-    save_data($fh_local, $data, "no");
+    save_data($fh_local, $data_ref, "no");
     undef $fh_local;
 } else {
-    save_data($fh_local, $data, "yes");
+    save_data($fh_local, $data_ref, "yes");
     undef $fh_local;
 }
 
@@ -131,6 +148,7 @@ sub save_data {
     my $xml_info = form_xml($info, $is_success);
     print $fh_save "$xml_info";
     $fh_save->close;
+    return;
 }
 
 # initialize file with saved procesed data
@@ -152,8 +170,10 @@ sub file_input {
 }
 
 # save formed in XML data the remote server
+# this is needed to rewrite via OOP interface
+# it should be like this: $copy_via_sftp->Copy_to_Serv->new(ftp, $host, %opts);
 sub save_to_serv {
-    my $info = shift;
+    my ($data_ref, $method) = @_;
     my %args = ("host" => "$ssh_host", "user" => "$ssh_user", "password" => "$ssh_passw");
     my $xml_data = form_xml($info);
     my $path = "$ssh_file";
